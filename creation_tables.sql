@@ -37,9 +37,15 @@ CREATE TABLE EQUIPEMENT (
 );
 
 -- Création de la table RESIDENT
+
 CREATE TABLE RESIDENT (
-    -- Mettez ici vos modifications pour cette table
+    idResident SERIAL PRIMARY KEY,
+    Nom VARCHAR(100),
+    Prenom VARCHAR(100),
+    NumeroTelephone VARCHAR(15),
+    Email VARCHAR(255)
 );
+
 
 -- Création de la table RESERVATION
 CREATE TABLE RESERVATION (
@@ -53,26 +59,41 @@ CREATE TABLE RESERVATION (
 );
 
 -- Création de la table MAINTENANCE
-CREATE TABLE MAINTENANCE (
-    -- Mettez ici vos modifications pour cette table
-);
+
+    CREATE TABLE MAINTENANCE (
+    idMaintenance SERIAL PRIMARY KEY,
+    type VARCHAR(100),
+    urgence VARCHAR(50),
+    tarifM DECIMAL(10, 2)
+    );
+
 
 -- Création de la table EVENEMENT
-CREATE TABLE EVENEMENT (
-    -- Mettez ici vos modifications pour cette table
+
+   CREATE TABLE EVENEMENT (
+    idEvenement SERIAL PRIMARY KEY,
+    nom VARCHAR(255),
+    date DATE,
+    invité VARCHAR(255),
+    lieu VARCHAR(255)
 );
+
 
 -- Création de la table PARTICIPE (relation entre RESIDENT et EVENEMENT)
 CREATE TABLE PARTICIPE (
-    -- Mettez ici vos modifications pour cette table
+    idResident INT,
+    idEvenement INT,
+    PRIMARY KEY (idResident, idEvenement),
+    FOREIGN KEY (idResident) REFERENCES RESIDENT(idResident),
+    FOREIGN KEY (idEvenement) REFERENCES EVENEMENT(idEvenement)
 );
 
 -- Création de la table EST_MAINTENU (relation entre EQUIPEMENT et MAINTENANCE)
 CREATE TABLE EST_MAINTENU (
-    idEquipement INT NOT NULL,
-    idMaintenance INT NOT NULL,
-    date DATE NOT NULL,
+    idEquipement INT,
+    idMaintenance INT,
+    date DATE,
     PRIMARY KEY (idEquipement, idMaintenance),
-    CONSTRAINT fk_equipement FOREIGN KEY (idEquipement) REFERENCES EQUIPEMENT(idEquipement) ON DELETE CASCADE,
-    CONSTRAINT fk_maintenance FOREIGN KEY (idMaintenance) REFERENCES MAINTENANCE(idMaintenance) ON DELETE CASCADE
+    FOREIGN KEY (idMaintenance) REFERENCES MAINTENANCE(idMaintenance)
+    -- Une référence pour idEquipement peut être ajoutée si une table EQUIPEMENT existe
 );
