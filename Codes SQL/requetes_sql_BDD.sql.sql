@@ -14,6 +14,27 @@ AND e.tarifEquipement <= 100  -- Exemple de filtre sur le prix
 ORDER BY c.Ville, l.idLogement;
 
 --2. Comment gérer les réservations et attribuer les logements aux nouveaux résidents en optimisant l’occupation ?
+CREATE OR REPLACE FUNCTION verifier_reservation_unique_par_resident()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Vérifier si la réservation d'un résident est unique
+    IF EXISTS (
+        SELECT 1 
+        FROM RESERVATION r JOIN LOGEMENT l
+        ON r.idLogement = l.idLogement
+        WHERE r.idResident = NEW.idResident
+    ) THEN (
+        RAISE EXCEPTION 'Ce résident %s a déjà réservé le logement %s.', NEW.idResident, r.idLogement;
+    )
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_reservation_unique
+BEFORE INSERT ON RESERVATION
+FOR EACH ROW
+EXECUTE FUNCTION verifier_reservation_unique_par_resident();
 
 
 --3. Quels résidents partagent actuellement un logement et quelles sont leurs interactions (participation à des événements, conflits signalés) ?
