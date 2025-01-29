@@ -121,7 +121,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Vérifier si le logement est bien "Disponible"
     IF (SELECT etat FROM LOGEMENT WHERE idLogement = NEW.idLogement) <> 'Disponible' THEN
-        RAISE EXCEPTION 'Le logement % n'"est pas disponible pour une réservation.', NEW.idLogement;
+        RAISE EXCEPTION 'Le logement % n''est pas disponible pour une réservation.', NEW.idLogement;
     END IF;
 
     -- Changer l'état du logement à "Occupée" après réservation
