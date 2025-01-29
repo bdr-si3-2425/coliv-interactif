@@ -23,6 +23,7 @@ CREATE TABLE LOGEMENT (
     idLogement SERIAL PRIMARY KEY,
     idComplexe INT NOT NULL,
     type VARCHAR(50),
+    etat VARCHAR(10) CHECK (etat IN ('Disponible', 'Occupée')),
     CONSTRAINT fk_complexe FOREIGN KEY (idComplexe) REFERENCES COMPLEXE(idComplexe) ON DELETE CASCADE
 );
 
@@ -30,14 +31,13 @@ CREATE TABLE LOGEMENT (
 CREATE TABLE EQUIPEMENT (
     idEquipement SERIAL PRIMARY KEY,
     nom VARCHAR(100),
-    etat VARCHAR(50),
+    etat VARCHAR(10) CHECK (etat IN ('Bon', 'Mauvais')),
     tarifEquipement NUMERIC(10, 2),
     idLogement INT NOT NULL,
     CONSTRAINT fk_logement FOREIGN KEY (idLogement) REFERENCES LOGEMENT(idLogement) ON DELETE CASCADE
 );
 
 -- Création de la table RESIDENT
-
 CREATE TABLE RESIDENT (
     idResident SERIAL PRIMARY KEY,
     Nom VARCHAR(100),
@@ -97,3 +97,28 @@ CREATE TABLE EST_MAINTENU (
     FOREIGN KEY (idMaintenance) REFERENCES MAINTENANCE(idMaintenance)
     -- Une référence pour idEquipement peut être ajoutée si une table EQUIPEMENT existe
 );
+
+-- Fonction pour vérifier qu'un logement ne peut pas appartenir à plusieurs complexes
+CREATE OR REPLACE FUNCTION verifier_appartenance_logement()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Vérifier si le logement existe déjà dans un autre complexe
+    IF EXISTS (
+        SELECT 1
+        FROM LOGEMENT
+        WHERE idLogement = NEW.idLogement
+          AND idComplexe <> NEW.idComplexe
+    ) THEN
+        -- Lever une exception
+        RAISE EXCEPTION 'Ce logement (%s) appartient déjà au complexe %s.', NEW.idLogement, NEW.idComplexe;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Création du trigger pour empêcher les mauvaises attributions
+CREATE TRIGGER eviter_les_fausses_attributions
+BEFORE INSERT OR UPDATE ON LOGEMENT
+FOR EACH ROW
+EXECUTE FUNCTION verifier_appartenance_logement();
