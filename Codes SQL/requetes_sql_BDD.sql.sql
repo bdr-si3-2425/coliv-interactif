@@ -1,30 +1,51 @@
 --1. Quels logements sont disponibles pour une période donnée, selon des critères spécifiques (type, emplacement, prix) ?
-SELECT l.idLogement, l.type, l.idComplexe, c.Ville, c.CodePostale, e.tarifEquipement
-FROM LOGEMENT l
-JOIN COMPLEXE c ON l.idComplexe = c.idComplexe
-JOIN EQUIPEMENT e ON e.idLogement = l.idLogement
-WHERE l.idLogement NOT IN (
-    SELECT idLogement
-    FROM RESERVATION
-    WHERE (dateEntree <= '2025-05-01' AND dateSortie >= '2025-04-01')
-)
-AND l.type = 'Studio'  -- Exemple de filtre sur le type
-AND c.Ville = 'Paris'  -- Exemple de filtre sur l'emplacement
-AND e.tarifEquipement <= 100  -- Exemple de filtre sur le prix
-ORDER BY c.Ville, l.idLogement;
+SELECT L.idLogement, L.type, L.etat, L.idComplexe, C.Ville
+FROM LOGEMENT L
+JOIN COMPLEXE C ON L.idComplexe = C.idComplexe  -- 🔹 Jointure pour récupérer la ville
+LEFT JOIN RESERVATION R ON L.idLogement = R.idLogement
+  AND (R.dateEntree = '2025-02-01' AND R.dateSortie = '2025-03-01')  -- Période recherchée
+WHERE R.idReservation IS NULL  -- 🔹 Vérifie que le logement est disponible
+  AND L.type = 'Studio'  
+  AND C.Ville = 'Paris'  -- 🔹 Filtre sur la ville
+  AND L.prix < 1000  
+ORDER BY L.idComplexe;
 
 --2. Comment gérer les réservations et attribuer les logements aux nouveaux résidents en optimisant l’occupation ?
 
 
 --3. Quels résidents partagent actuellement un logement et quelles sont leurs interactions (participation à des événements, conflits signalés) ?
-SELECT r.Nom, r.Prenom, l.type, e.nom AS evenement, p.date
-FROM RESIDENT r
-JOIN RESERVATION res ON r.idResident = res.idResident
-JOIN LOGEMENT l ON res.idLogement = l.idLogement
-LEFT JOIN PARTICIPE p ON r.idResident = p.idResident
-LEFT JOIN EVENEMENT e ON p.idEvenement = e.idEvenement
-WHERE res.dateSortie > CURRENT_DATE
-ORDER BY res.dateEntree, l.idLogement;
+  
+  --3.1 Identifier les résidents qui partagent actuellement un même logement
+SELECT R1.idResident AS Resident1, R2.idResident AS Resident2, L.idLogement
+FROM RESERVATION R1
+JOIN RESERVATION R2 ON R1.idLogement = R2.idLogement AND R1.idResident <> R2.idResident
+JOIN LOGEMENT L ON R1.idLogement = L.idLogement
+WHERE CURRENT_DATE BETWEEN R1.dateEntree AND R1.dateSortie
+  AND CURRENT_DATE BETWEEN R2.dateEntree AND R2.dateSortie
+ORDER BY L.idLogement;
+
+--3.2 Vérifier la participation des résidents à des événements
+SELECT DISTINCT R.idResident, E.nom AS NomEvenement, E.date, L.idLogement
+FROM PARTICIPE P
+JOIN RESIDENT R ON P.idResident = R.idResident
+JOIN EVENEMENT E ON P.idEvenement = E.idEvenement
+JOIN RESERVATION Res ON R.idResident = Res.idResident
+JOIN LOGEMENT L ON Res.idLogement = L.idLogement
+WHERE CURRENT_DATE BETWEEN Res.dateEntree AND Res.dateSortie
+ORDER BY L.idLogement, E.date;
+
+-- si on veux croiser les résultats des deux requêtes, tu peux utiliser une requête combinée pour voir uniquement les résidents colocataires qui participent à des événements ensemble :
+SELECT DISTINCT R1.idResident AS Resident1, R2.idResident AS Resident2, L.idLogement, E.nom AS NomEvenement, E.date
+FROM RESERVATION R1
+JOIN RESERVATION R2 ON R1.idLogement = R2.idLogement AND R1.idResident <> R2.idResident
+JOIN LOGEMENT L ON R1.idLogement = L.idLogement
+JOIN PARTICIPE P1 ON R1.idResident = P1.idResident
+JOIN PARTICIPE P2 ON R2.idResident = P2.idResident AND P1.idEvenement = P2.idEvenement
+JOIN EVENEMENT E ON P1.idEvenement = E.idEvenement
+WHERE CURRENT_DATE BETWEEN R1.dateEntree AND R1.dateSortie
+  AND CURRENT_DATE BETWEEN R2.dateEntree AND R2.dateSortie
+ORDER BY L.idLogement, E.date;
+
 
 
 --4. Quels logements nécessitent le plus d’interventions de maintenance et pourquoi ?
