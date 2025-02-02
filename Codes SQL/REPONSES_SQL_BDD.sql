@@ -55,7 +55,7 @@ JOIN LOGEMENT L ON Res.idLogement = L.idLogement
 WHERE CURRENT_DATE BETWEEN Res.dateEntree AND Res.dateSortie
 ORDER BY L.idLogement, E.date;
 
--- si on veux croiser les résultats des deux requêtes, tu peux utiliser une requête combinée pour voir uniquement les résidents colocataires qui participent à des événements ensemble :(PAS DE SORTIE)
+-- si on veux croiser les résultats des deux requêtes, on  peut utiliser une requête combinée pour voir uniquement les résidents colocataires qui participent à des événements ensemble :(PAS DE SORTIE)
 SELECT DISTINCT R1.idResident AS Resident1, R2.idResident AS Resident2, E.nom AS NomEvenement, E.date, L.idLogement
 FROM RESERVATION R1
 JOIN RESERVATION R2 ON R1.idLogement = R2.idLogement AND R1.idResident <> R2.idResident
@@ -90,7 +90,7 @@ JOIN LOGEMENT l ON r1.idLogement = l.idLogement
 WHERE r1.dateSortie < r2.dateEntree
 AND r2.dateEntree > r1.dateEntree
 AND r1.dateSortie < CURRENT_DATE
-AND r2.dateEntree > CURRENT_DATE;  -- Vérifie l'impact des prolongations sur les réservations futures
+AND r2.dateEntree > CURRENT_DATE;  -- Vérification  l'impact des prolongations sur les réservations futures
    
 
 
