@@ -70,9 +70,9 @@ CREATE TABLE MAINTENANCE (
 CREATE TABLE EVENEMENT (
     idEvenement SERIAL PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
-    date DATE NOT NULL,
-    invite VARCHAR(100),
-    lieu VARCHAR(100)
+    dateEvenement DATE NOT NULL CHECK (dateEvenement >= CURRENT_DATE),  -- Empêche d'ajouter des événements passés
+    invite VARCHAR(100),  
+    lieu VARCHAR(100) NOT NULL
 );
 
 -- Création de la table PARTICIPE (relation entre RESIDENT et EVENEMENT)
@@ -93,45 +93,3 @@ CREATE TABLE EST_MAINTENU (
     CONSTRAINT fk_equipement FOREIGN KEY (idEquipement) REFERENCES EQUIPEMENT(idEquipement) ON DELETE CASCADE,
     CONSTRAINT fk_maintenance FOREIGN KEY (idMaintenance) REFERENCES MAINTENANCE(idMaintenance) ON DELETE CASCADE
 );
-
--- 1. Vérifier qu'un résident n'est pas déjà enregistré
-CREATE OR REPLACE FUNCTION verifier_resident_unique()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM RESIDENT
-        WHERE Nom = NEW.Nom
-          AND Prenom = NEW.Prenom
-          AND Email = NEW.Email
-    ) THEN
-        RAISE EXCEPTION 'Le résident % est déjà enregistré.', NEW.Email;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_resident_unique
-BEFORE INSERT ON RESIDENT
-FOR EACH ROW
-EXECUTE FUNCTION verifier_resident_unique();
-
--- 2. Empêcher une réservation sur un logement non disponible
-CREATE OR REPLACE FUNCTION verifier_logement_disponible()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Vérifier si le logement est bien "Disponible"
-    IF (SELECT etat FROM LOGEMENT WHERE idLogement = NEW.idLogement) <> 'Disponible' THEN
-        RAISE EXCEPTION 'Le logement % n''est pas disponible pour une réservation.', NEW.idLogement;
-    END IF;
-
-    -- Changer l'état du logement à "Occupée" après réservation
-    UPDATE LOGEMENT SET etat = 'Occupée' WHERE idLogement = NEW.idLogement;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_verifier_logement_disponible
-BEFORE INSERT ON RESERVATION
-FOR EACH ROW
-EXECUTE FUNCTION verifier_logement_disponible();
