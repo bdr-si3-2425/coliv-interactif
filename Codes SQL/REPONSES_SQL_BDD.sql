@@ -36,7 +36,7 @@ EXECUTE FUNCTION verifier_reservation_unique_par_resident();
 
 --3. Quels résidents partagent actuellement un logement et quelles sont leurs interactions (participation à des événements, conflits signalés) ?
   
-  --3.1 Identifier les résidents qui partagent actuellement un même logement
+  --3.1 Identifier les résidents qui partagent actuellement un même logement(PAS DE SORTIE)
 SELECT R1.idResident AS Resident1, R2.idResident AS Resident2, L.idLogement
 FROM RESERVATION R1
 JOIN RESERVATION R2 ON R1.idLogement = R2.idLogement AND R1.idResident <> R2.idResident
@@ -55,8 +55,8 @@ JOIN LOGEMENT L ON Res.idLogement = L.idLogement
 WHERE CURRENT_DATE BETWEEN Res.dateEntree AND Res.dateSortie
 ORDER BY L.idLogement, E.date;
 
--- si on veux croiser les résultats des deux requêtes, tu peux utiliser une requête combinée pour voir uniquement les résidents colocataires qui participent à des événements ensemble :
-SELECT DISTINCT R1.idResident AS Resident1, R2.idResident AS Resident2, L.idLogement, E.nom AS NomEvenement, E.date
+-- si on veux croiser les résultats des deux requêtes, tu peux utiliser une requête combinée pour voir uniquement les résidents colocataires qui participent à des événements ensemble :(PAS DE SORTIE)
+SELECT DISTINCT R1.idResident AS Resident1, R2.idResident AS Resident2, E.nom AS NomEvenement, E.date, L.idLogement
 FROM RESERVATION R1
 JOIN RESERVATION R2 ON R1.idLogement = R2.idLogement AND R1.idResident <> R2.idResident
 JOIN LOGEMENT L ON R1.idLogement = L.idLogement
@@ -69,23 +69,58 @@ ORDER BY L.idLogement, E.date;
 
 
 
+
 --4. Quels logements nécessitent le plus d’interventions de maintenance et pourquoi ?
 
 --5. Quels résidents ont prolongé leur séjour, et comment cela impacte les réservations futures ?
-SELECT r.Nom, r.Prenom, res.dateEntree, res.dateSortie
-FROM RESIDENT r
-JOIN RESERVATION res ON r.idResident = res.idResident
-WHERE res.dateSortie > CURRENT_DATE
-AND res.dateSortie > res.dateEntree + INTERVAL '6 months';  -- Exemple de prolongation
-ORDER BY res.dateEntree;
+    --5.1 : Identifier les résidents qui ont prolongé leur séjour(PAS DE SORTIE)
+SELECT r1.idResident, r1.dateEntree, r1.dateSortie, r2.dateEntree AS nouvelle_dateEntree, r2.dateSortie AS nouvelle_dateSortie
+FROM RESERVATION r1
+JOIN RESERVATION r2 ON r1.idResident = r2.idResident
+WHERE r1.dateSortie < r2.dateEntree  -- Vérifier si la première réservation se termine avant le début de la nouvelle réservation
+AND r2.dateEntree > r1.dateEntree  -- Assurer qu'il y a prolongation (pas de nouvelle réservation en dehors de la période initiale)
+AND r1.dateSortie < CURRENT_DATE;  -- Les prolongations qui concernent des réservations déjà passées
+
+     --5.2 : Analyser l'impact des prolongations sur les réservations futures(PAS DE SORTIE)
+SELECT r1.idResident, l.idLogement, r1.dateEntree, r1.dateSortie, r2.dateEntree AS nouvelle_dateEntree, r2.dateSortie AS nouvelle_dateSortie
+FROM RESERVATION r1
+JOIN RESERVATION r2 ON r1.idResSELECT DISTINCT R1.idResident AS Resident1, R2.idResident AS Resident2, L.idLogement, E.nom AS NomEvenement, E.date
+ident = r2.idResident
+JOIN LOGEMENT l ON r1.idLogement = l.idLogement
+WHERE r1.dateSortie < r2.dateEntree
+AND r2.dateEntree > r1.dateEntree
+AND r1.dateSortie < CURRENT_DATE
+AND r2.dateEntree > CURRENT_DATE;  -- Vérifie l'impact des prolongations sur les réservations futures
+   
 
 
 --6. Comment organiser les événements communautaires pour maximiser la participation des résidents dans un logement donné ?
 
 --7. Quels types de logements sont les plus demandés et quelles améliorations peuvent augmenter leur attractivité ?
-SELECT l.type, COUNT(res.idReservation) AS nombre_reservations
+  --7. 1 : Identifier les types de logements les plus demandés
+SELECT l.type, COUNT(r.idReservation) AS nombreReservations
 FROM LOGEMENT l
-LEFT JOIN RESERVATION res ON l.idLogement = res.idLogement
+JOIN RESERVATION r ON l.idLogement = r.idLogement
 GROUP BY l.type
-ORDER BY nombre_reservations DESC;
+ORDER BY nombreReservations DESC;
+
+  --7.2 : Analyser les améliorations possibles pour augmenter l'attractivité des logements(ATTENTION:PAS DE SORTIE)
+SELECT l.type, e.idEquipement, COUNT(r.idReservation) AS nombreReservations
+FROM LOGEMENT l
+JOIN RESERVATION r ON l.idLogement = r.idLogement
+JOIN EQUIPEMENT e  ON l.idLogement = e.idLogement
+GROUP BY l.type, e.idEquipement
+ORDER BY nombreReservations DESC;
+
+  --7.3 : Suggestions d'améliorations pour augmenter l'attractivité
+SELECT l.type, COUNT(r.idReservation) AS nombreReservations, 
+       AVG(e.tarifEquipement) AS moyennePrix, 
+       MAX(e.etat) AS meilleureQualite
+FROM LOGEMENT l
+JOIN RESERVATION r ON l.idLogement = r.idLogement
+JOIN EQUIPEMENT e ON e.idEquipement = e.idEquipement
+GROUP BY l.type
+ORDER BY nombreReservations DESC;
+
+
 
