@@ -1,6 +1,6 @@
--- ----------------------------------------------------
--- Insérer les données de base pour tester mes requêtes
--- ----------------------------------------------------
+-- ----------------------------------------
+-- Jeu de données pour tester mes requêtes
+-- ----------------------------------------
 
 -- Insérer les complexes
 INSERT INTO COMPLEXE (Ville, CodePostal, NomDeRue, NumeroDeRue)
@@ -72,7 +72,15 @@ VALUES
 -- Question 2 : Tester la vérification de la disponibilité d'un logement avant une réservation
 -- Essaie d'insérer une réservation pour un logement déjà occupé (idLogement = 2, déjà occupé)
 INSERT INTO RESERVATION (dateEntree, dateSortie, idResident, idLogement)
-VALUES ('2025-02-11', '2025-02-14', 1, 2);  -- Cela devrait échouer si la fonction est bien en place
+VALUES ('2025-02-11', '2025-02-14', 1, 2);  
+-- Cela échouera normalement avec le trigger en place
+----------------------------------------------------------------------------------
+-- ERROR:  Le logement est déjà réservé pendant cette période
+-- CONTEXT:  fonction PL/pgSQL verifier_disponibilite_logement(), ligne 12 à RAISE 
+
+-- ERREUR:  Le logement est déjà réservé pendant cette période
+----------------------------------------------------------------------------------
+
 
 -- Question 4 : Tester les maintenances les plus fréquentes
 WITH MaintenanceCounts AS (
@@ -87,9 +95,10 @@ SELECT mc.idLogement, mc.type, mc.nombreMaintenance
 FROM MaintenanceCounts mc
 WHERE mc.nombreMaintenance = (SELECT MAX(nombreMaintenance) FROM MaintenanceCounts);
 
--- Résultats attendu
+-- Résultats attendu :
 ----------------------------------------------------------------
 --idlogement         "type"                "nombremaintenance"
+----------------------------------------------------------------
 -- 1          "Entretien Machine à laver"         "1"
 -- 1            "Réparation Frigo"                "1"
 -- 2            "Réparation Frigo"                "1"
@@ -102,9 +111,10 @@ LEFT JOIN PARTICIPE p ON e.idEvenement = p.idEvenement
 GROUP BY e.idEvenement
 ORDER BY nombre_participants DESC;
 
--- Résultats attendu
+-- Résultats attendu :
 --------------------------------------------------
 --      evenement         "nombre_participants"
+--------------------------------------------------
 -- Réunion de Quartier            "2"
 --   Soirée Cinéma                "1"
 --------------------------------------------------
@@ -120,7 +130,9 @@ WHERE p.idResident IS NULL;
 INSERT INTO EVENEMENT (nom, dateEvenement, invite, lieu)
 VALUES ('Atelier Cuisine', '2025-02-20', 'Tous les résidents', 'Salle de loisirs');
 -- Sortie : 
+---------------------------------------------------------------------
 -- NOTICE:  Nouvel événement : Atelier Cuisine prévu le 2025-02-20 !
 -- INSERT 0 1
 
 -- Query returned successfully in 112 msec
+---------------------------------------------------------------------

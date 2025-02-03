@@ -41,7 +41,7 @@ EXECUTE FUNCTION verifier_disponibilite_logement();
 
   --> Vérifier et mettre à jour l'état d'un logement après la fin d'une réservation
 CREATE OR REPLACE FUNCTION verifier_etat_logement_fin_reservation() 
-RETURNS TRIGGER AS $$  -- Correction de RETURNS TRIGGER
+RETURNS TRIGGER AS $$ 
 BEGIN
   --> Vérifier si le logement est "Occupée" et doit être libéré après 13:00 le jour de sortie
   IF EXISTS (
@@ -63,7 +63,7 @@ $$ LANGUAGE plpgsql;
 
   --> Déclencheur pour mettre à jour l'état du logement après une réservation
 CREATE TRIGGER trigger_verifier_etat_logement_fin_reservation
-BEFORE INSERT OR UPDATE ON RESERVATION  -- Correction de la syntaxe "BEFORE INSERT, UPDATE"
+BEFORE INSERT OR UPDATE ON RESERVATION -- Avant insertion d'une nouvelle réservation ou une modification
 FOR EACH ROW
 EXECUTE FUNCTION verifier_etat_logement_fin_reservation();
 
