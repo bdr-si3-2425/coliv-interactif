@@ -1,17 +1,19 @@
 --1. Quels logements sont disponibles pour une période donnée, selon des critères spécifiques (type, emplacement, prix) ?
-SELECT L.idLogement, L.type, L.etat, L.idComplexe, C.Ville
+--On peut créer une vue 
+-- Notion Principale : VUE
+CREATE VIEW LesLogementDisponible AS 
+SELECT L.idLogement, L.type, L.etat, L.idComplexe, C.Ville,L.prix
 FROM LOGEMENT L
-JOIN COMPLEXE C ON L.idComplexe = C.idComplexe  -- Jointure pour récupérer la ville
+JOIN COMPLEXE C ON L.idComplexe = C.idComplexe  
 LEFT JOIN RESERVATION R ON L.idLogement = R.idLogement
-  AND (R.dateEntree = '2025-02-01' AND R.dateSortie = '2025-03-01')  -- Période recherchée
-WHERE R.idReservation IS NULL  -- Vérifie que le logement est disponible
-  AND L.type = 'Studio'  
-  AND C.Ville = 'Paris'  -- Filtre sur la ville
-  AND L.prix < 1000  
-ORDER BY L.idComplexe;
+  AND ('2025-02-01' BETWEEN R.dateEntree AND R.dateSortie  
+       OR '2025-03-01' BETWEEN R.dateEntree AND R.dateSortie)  
+WHERE R.idReservation IS NULL;
+-- Pour simplifier les futures requêtes et éviter de répéter du code.
+SELECT * FROM LesLogementDisponible WHERE type = 'Studio' AND Ville = 'Paris' AND prix < 1000;
 
 --2. Comment gérer les réservations et attribuer les logements aux nouveaux résidents en optimisant l’occupation ?
-  
+  -- Notions Principales : Triggers et un contrôle d'accés
   --> Vérifier la disponibilité du logement avant une réservation afin d'empêcher une réservation sur un logement non disponible :
 CREATE OR REPLACE FUNCTION verifier_disponibilite_logement()
 RETURNS TRIGGER AS $$
@@ -73,11 +75,19 @@ SELECT l.idLogement, l.type, l.prix, l.idComplexe
 FROM LOGEMENT l 
 WHERE l.etat = 'Disponible';
 
+  --> controle d'accés
+CREATE ROLE Admin;
+CREATE ROLE Gestionnaire;
+CREATE ROLE Client;
+
+GRANT ALL PRIVILEGES ON LOGEMENT TO Admin;
+GRANT INSERT, UPDATE, DELETE ON RESERVATION TO Gestionnaire;
+GRANT SELECT ON LOGEMENT, RESERVATION TO Client;
 
 
 
 --3. Quels résidents partagent actuellement un logement et quelles sont leurs interactions (participation à des événements, conflits signalés) ?
-  
+  -- Notions Principales : Jointures multiple de tables
   --3.1 Identifier les résidents qui partagent actuellement un même logement(PAS DE SORTIE)
 SELECT R1.idResident AS Resident1, R2.idResident AS Resident2, L.idLogement
 FROM RESERVATION R1
@@ -100,6 +110,7 @@ ORDER BY L.idLogement, E.date;
 
 
 --4. Quels logements nécessitent le plus d’interventions de maintenance et pourquoi ?
+  -- Notions Principales : Common table expresssion (CTE) et requête imbiquée
   --> Regrouper les maintenances par logement et type via une CTE(Common Table Expression)
 WITH MaintenanceCounts AS (
   SELECT l.idLogement, m.type, COUNT(*) AS nombreMaintenance
@@ -109,7 +120,6 @@ WITH MaintenanceCounts AS (
   JOIN MAINTENANCE m ON m.idMaintenace = EstM.idMaintenace
   GROUP BY l.idLogement, m.type
 )
-
   --> Sélectionner les logements ayant le nombre maximal de maintenances avec leur type
 SELECT mc.idLogement, mc.type, mc.nombreMaintenance
 FROM MaintenanceCounts mc
@@ -118,6 +128,7 @@ WHERE mc.nombreMaintenance = (SELECT MAX(nombreMaintenance) FROM MaintenanceCoun
 
 
 --5. Quels résidents ont prolongé leur séjour, et comment cela impacte les réservations futures ?
+    -- Notions Principales : Jointures simples
     --5.1 : Identifier les résidents qui ont prolongé leur séjour(PAS DE SORTIE)
 SELECT r1.idResident, r1.dateEntree, r1.dateSortie, r2.dateEntree AS nouvelle_dateEntree, r2.dateSortie AS nouvelle_dateSortie
 FROM RESERVATION r1
@@ -140,6 +151,7 @@ AND r2.dateEntree > CURRENT_DATE;  -- Vérification  l'impact des prolongations 
 
 
 --6. Comment organiser les événements communautaires pour maximiser la participation des résidents dans un logement donné ?
+  -- Notions Principales : Jointure et Trigger
   -->Evenements populaires :
 SELECT e.nom AS evenement, COUNT(p.idResident) AS nombre_participants
 FROM EVENEMENT e
@@ -171,6 +183,7 @@ EXECUTE FUNCTION notifier_nouvel_evenement();
 
 
 --7. Quels types de logements sont les plus demandés et quelles améliorations peuvent augmenter leur attractivité ?
+  -- Notions Principales : Utilisation d'aggrégats
   --7. 1 : Identifier les types de logements les plus demandés
 SELECT l.type, COUNT(r.idReservation) AS nombreReservations
 FROM LOGEMENT l

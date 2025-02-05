@@ -203,9 +203,19 @@ INSERT INTO RESIDENT (Nom, Prenom, NumeroDeTelephone, Email) VALUES
 ('Dubois', 'Lucie', '0678901234', 'lucie.dubois@example.com'),
 ('Garnier', 'Julien', '0789012345', 'julien.garnier@example.com'),
 ('Lemoine', 'Claire', '0890123456', 'claire.lemoine@example.com'),
--- Ajoutez jusqu'à 160 résidents selon votre besoin
-('Dufresne', 'Nathalie', '0901234567', 'nathalie.dufresne@example.com');
-
+('Dufresne', 'Nathalie', '0901234567', 'nathalie.dufresne@example.com'),
+('Moreau', 'Thomas', '0912345678', 'thomas.moreau@example.com'),
+('Bernard', 'Camille', '0923456789', 'camille.bernard@example.com'),
+('Leroy', 'Noah', '0934567890', 'noah.leroy@example.com'),
+('Guerin', 'Lucas', '0945678901', 'lucas.guerin@example.com'),
+('Blanc', 'Hugo', '0956789012', 'hugo.blanc@example.com'),
+('Meyer', 'Chloé', '0967890123', 'chloe.meyer@example.com'),
+('Carpentier', 'Léa', '0978901234', 'lea.carpentier@example.com'),
+('Garcia', 'Mathieu', '0989012345', 'mathieu.garcia@example.com'),
+('Robin', 'Elodie', '0990123456', 'elodie.robin@example.com'),
+('Henry', 'Victor', '0991234567', 'victor.henry@example.com'),
+('Barbier', 'Sarah', '0992345678', 'sarah.barbier@example.com'),
+('Lambert', 'Emma', '0993456789', 'emma.lambert@example.com');
 
 
 -- Insertion des réservations
@@ -217,7 +227,29 @@ INSERT INTO RESERVATION (dateEntree, dateSortie, idResident, idLogement) VALUES
 ('2025-02-01', '2025-02-28', 5, 159),
 ('2025-02-01', '2025-02-28', 6, 137),
 ('2025-02-01', '2025-02-28', 7, 133),
-('2025-02-01', '2025-02-28', 8, 131);
+('2025-02-01', '2025-02-28', 8, 131),
+-- Jean Dupont et Marie Martin partagent le logement 2
+('2025-02-01', '2025-02-28', 1, 2),
+('2025-02-01', '2025-02-28', 2, 2),
+
+-- Paul Lemoine et Sophie Robert partagent le logement 3
+('2025-02-05', '2025-03-05', 3, 3),
+('2025-02-10', '2025-03-10', 4, 3),
+
+-- Jean Dupont réserve et prolonge son séjour
+('2025-01-01', '2025-01-15', 1, 1),
+('2025-01-15', '2025-01-30', 1, 1),
+
+-- Marie Martin réserve **mais elle commence avant que Jean Dupont parte**
+('2025-01-28', '2025-02-10', 2, 1), --  CONFLIT : elle arrive avant le départ de Jean Dupont
+
+('2025-02-01', '2025-02-28', 1, 1),
+('2025-02-01', '2025-02-28', 2, 1),
+('2025-02-01', '2025-02-28', 3, 2),
+('2025-02-01', '2025-02-28', 4, 3),
+('2025-02-01', '2025-02-28', 5, 4);
+
+
 
 
 -- Insertion des maintenances
@@ -259,3 +291,18 @@ INSERT INTO EST_MAINTENU (idEquipement, idMaintenance, date) VALUES
 (10, 1, '2025-02-06'),
 (12, 2, '2025-02-07'),
 (17, 5, '2025-02-08');
+
+
+INSERT INTO EQUIPEMENT (nom, etat, tarifEquipement, idLogement) VALUES
+('Climatisation', 'Bon', 200, 1),
+('Chauffage', 'Mauvais', 150, 1),
+('Réfrigérateur', 'Bon', 300, 2),
+('Four', 'Mauvais', 180, 2),
+('WiFi', 'Bon', 50, 3),
+('Lave-linge', 'Mauvais', 250, 4),
+('Climatisation', 'Bon', 200, 1),
+('Chauffage', 'Mauvais', 150, 1),
+('Réfrigérateur', 'Bon', 300, 2),
+('Four', 'Mauvais', 180, 2),
+('WiFi', 'Bon', 50, 3),
+('Lave-linge', 'Mauvais', 250, 3);

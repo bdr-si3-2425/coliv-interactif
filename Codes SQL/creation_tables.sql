@@ -24,6 +24,7 @@ CREATE TABLE LOGEMENT (
     idComplexe INT NOT NULL,
     type VARCHAR(50) NOT NULL,
     etat VARCHAR(10) DEFAULT 'Disponible' CHECK (etat IN ('Disponible', 'Occupée')),
+    prix INT DEFAULT 0 CHECK (prix >= 0),
     CONSTRAINT fk_complexe FOREIGN KEY (idComplexe) REFERENCES COMPLEXE(idComplexe) ON DELETE CASCADE
 );
 
