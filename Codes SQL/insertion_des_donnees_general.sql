@@ -1,3 +1,5 @@
+-- Certains de ces données ont été généré par ChatGPT pour nous faciliter les insertions
+
 -- Insertion des 8 complexes
 INSERT INTO COMPLEXE (Ville, CodePostal, NomDeRue, NumeroDeRue) VALUES
 ('Paris', '75001', 'Rue de Rivoli', 10),

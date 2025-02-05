@@ -1,6 +1,7 @@
--- ----------------------------------------
+-- -----------------------------------------------
 -- Jeu de données pour tester mes requêtes
--- ----------------------------------------
+-- Certains données ont étaient obtenu via chatGPT
+-- -----------------------------------------------
 
 -- Insérer les complexes
 INSERT INTO COMPLEXE (Ville, CodePostal, NomDeRue, NumeroDeRue)
